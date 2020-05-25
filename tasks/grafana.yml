@@ -1,0 +1,38 @@
+---
+- name: Create grafana dir
+  notify: restart_grafana
+  file:
+    path: '{{ grafana_dir }}'
+    state: directory
+
+- name: Create data sources dir
+  notify: restart_grafana
+  file:
+    path: '{{ grafana_provisioning_dir }}/datasources'
+    state: directory
+    recurse: true
+
+- name: Create the data sources file
+  copy:
+    content: '{{ grafana_data_sources }}'
+    dest: '{{ grafana_provisioning_dir }}/datasources/datasources.yml'
+
+- name: Pull image
+  docker_image:
+    source: pull
+    name: '{{ grafana_image }}'
+
+- name: Start container
+  notify: health_check_grafana
+  docker_container:
+    image: '{{ grafana_image }}'
+    name: '{{ grafana_container_name }}'
+    user: root
+    restart_policy: unless-stopped
+    networks: '{{ monitoring_default_docker_networks }} + {{ grafana_docker_networks }}'
+    env: '{{ grafana_env }}'
+    ports:
+      - '127.0.0.1:9099:80'
+    volumes:
+      - '{{ grafana_data_dir }}:/var/lib/grafana'
+      - '{{ grafana_provisioning_dir }}:/etc/grafana/provisioning'

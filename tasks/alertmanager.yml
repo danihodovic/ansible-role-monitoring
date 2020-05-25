@@ -1,0 +1,33 @@
+---
+- name: Create dirs
+  file:
+    path: '{{ alertmanager_dir }}'
+    state: directory
+
+- name: Copy config file
+  notify: restart_alertmanager
+  copy:
+    content: '{{ alertmanager_config }}'
+    dest: '{{ alertmanager_dir }}/alertmanager.yml'
+
+- name: Pull image
+  docker_image:
+    source: pull
+    name: '{{ alertmanager_image }}'
+
+- name: Start container
+  notify: health_check_alertmanager
+  docker_container:
+    image: '{{ alertmanager_image }}'
+    name: '{{ alertmanager_container_name }}'
+    restart_policy: unless-stopped
+    networks: '{{ monitoring_default_docker_networks }} + {{ alertmanager_docker_networks }}'
+    user: root
+    ports:
+      - '127.0.0.1:9093:9093'
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--web.external-url={{ alertmanager_url }}'
+    volumes:
+      - '{{ alertmanager_dir }}:/etc/alertmanager'
+      - '{{ alertmanager_dir }}/data:/alertmanager'

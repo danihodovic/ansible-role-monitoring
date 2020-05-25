@@ -1,0 +1,27 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: delegated
+  options:
+    managed: False
+    ansible_connection_options:
+      ansible_connection: local
+platforms:
+  - name: localhost
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      interpreter_python: ../../.venv/bin/python
+      stdout_callback: yaml
+  inventory:
+    group_vars:
+      all:
+        prometheus_dir: /tmp/prometheus
+        alertmanager_dir: /tmp/alertmanager
+        grafana_dir: /tmp/grafana
+
+verifier:
+  name: testinfra
+  directory: ../../tests

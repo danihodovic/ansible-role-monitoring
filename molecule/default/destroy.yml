@@ -1,0 +1,19 @@
+---
+- name: Destroy
+  hosts: localhost
+  tasks:
+    - name: Remove the container
+      docker_container:
+        name: '{{ item }}'
+        state: absent
+      loop: [prometheus, alertmanager, grafana]
+
+    - name: Delete the dirs
+      become: true
+      file:
+        state: absent
+        path: '{{ prometheus_dir }}'
+      loop:
+        - '{{ prometheus_dir }}'
+        - '{{ alertmanager_dir }}'
+        - '{{ grafana_dir }}'

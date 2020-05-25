@@ -1,0 +1,42 @@
+---
+monitoring_docker_network_name: monitoring
+monitoring_default_docker_networks:
+  - name: '{{ monitoring_docker_network_name }}'
+
+prometheus_dir: /opt/prometheus
+prometheus_image: prom/prometheus:latest
+prometheus_container_name: prometheus
+prometheus_retention_period: '365d'
+prometheus_config: '{{ lookup("template", "prometheus_default_config.yml") }}'
+prometheus_recording_rules: ''
+prometheus_alerting_rules: ''
+prometheus_docker_networks: []
+
+alertmanager_dir: /opt/alertmanager
+alertmanager_image: prom/alertmanager:latest
+alertmanager_container_name: alertmanager
+alertmanager_url: http://alertmanager
+alertmanager_config: '{{ lookup("template", "alertmanager_default_config.yml") }}'
+alertmanager_docker_networks: []
+
+grafana_dir: /opt/grafana
+grafana_data_dir: '{{ grafana_dir }}/data'
+grafana_provisioning_dir: '{{ grafana_dir }}/provisioning'
+grafana_image: grafana/grafana:latest
+grafana_container_name: grafana
+grafana_docker_networks: []
+grafana_env:
+  GF_SERVER_HTTP_PORT: '80'
+  GF_SERVER_HTTP_ENABLE_GZIP: 'true'
+  GF_DATABASE_TYPE: 'sqlite3'
+  GF_DATABASE_PATH: '{{ grafana_dir }}/grafana.sqlite3'
+  GF_SESSION_COOKIE_SECURE: 'true'
+  GF_SESSION_SESSION_LIFE_TIME: '2592000' # 1 month
+grafana_env_overrides: {}
+grafana_data_sources: |
+  apiVersion: 1
+  datasources:
+    - name: Prometheus
+      type: prometheus
+      access: proxy
+      url: http://{{ prometheus_container_name }}:9090

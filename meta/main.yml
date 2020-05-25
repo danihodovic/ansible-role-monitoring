@@ -1,0 +1,8 @@
+galaxy_info:
+  author: Dani Hodovic
+  description: An Ansible role that installs a Prometheus / Grafana stack
+  company: Depode LTD (https://depode.com)
+  license: MIT
+  min_ansible_version: 2.9
+  galaxy_tags: [monitoring, prometheus, grafana, alertmanager, docker]
+dependencies: []

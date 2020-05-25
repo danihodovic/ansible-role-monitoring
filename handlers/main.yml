@@ -1,0 +1,62 @@
+---
+- name: Restart prometheus
+  listen: restart_prometheus
+  notify: health_check_prometheus
+  uri:
+    url: http://localhost:9090/-/reload
+    method: POST
+    timeout: 60
+  register: restart_prometheus
+  retries: 25
+  delay: 1
+  until: restart_prometheus.status == 200
+
+- name: Health check prometheus
+  listen: health_check_prometheus
+  uri:
+    url: http://localhost:9090/-/healthy
+  register: health_check_prometheus
+  retries: 25
+  delay: 1
+  until: health_check_prometheus.status == 200
+
+- name: Restart alertmanager
+  listen: restart_alertmanager
+  notify: health_check_alertmanager
+  docker_container:
+    name: '{{ alertmanager_container_name }}'
+    state: started
+    restart: true
+
+- name: Health check alertmanager
+  listen: health_check_alertmanager
+  uri:
+    url: http://localhost:9093/-/ready
+    status_code: 200
+    timeout: 5
+  register: health_check_alertmanager
+  retries: 10
+  delay: 1
+  until: health_check_alertmanager.status == 200
+
+- name: Include Grafana handlers
+  include_tasks: ./grafana.yml
+
+- name: restart grafana
+  listen: restart_grafana
+  notify: health_check_grafana
+  docker_container:
+    name: '{{ grafana_container_name }}'
+    state: started
+    restart: true
+
+- name: health check grafana
+  listen: health_check_grafana
+  uri:
+    url: http://localhost:9099/api/health
+    status_code: 200
+    timeout: 5
+  register: health_check_grafana
+  retries: 10
+  delay: 1
+  until: health_check_grafana.status == 200
