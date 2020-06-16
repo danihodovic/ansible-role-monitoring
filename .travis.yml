@@ -1,6 +1,7 @@
 ---
 language: python
 python: 3.8.2
+cache: pip
 
 services:
   - docker
