@@ -21,5 +21,3 @@
       include_role:
         name: ansible-role-prometheus
         tasks_from: grafana.yml
-
-# http://localhost:9099/api/datasources/proxy/1/api/v1/query?query=1%2B1&time=1590425158.273

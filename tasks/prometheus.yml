@@ -34,6 +34,8 @@
 - name: Check config
   changed_when: false
   docker_container: &prometheus_docker_container
+    comparisons:
+      '*': strict
     image: '{{ prometheus_image }}'
     name: '{{ prometheus_container_name }}-check-config'
     user: root
@@ -41,6 +43,7 @@
     command: 'check config /etc/prometheus/prometheus.yml'
     detach: false
     cleanup: true
+    # yamllint disable-line rule:line-length
     networks: '{{ monitoring_default_docker_networks }} + {{ prometheus_docker_networks }}'
     volumes:
       - '{{ prometheus_dir }}:/etc/prometheus'
