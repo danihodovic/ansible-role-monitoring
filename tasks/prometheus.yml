@@ -32,6 +32,7 @@
     name: '{{ prometheus_image }}'
 
 - name: Check config
+  changed_when: false
   docker_container: &prometheus_docker_container
     image: '{{ prometheus_image }}'
     name: '{{ prometheus_container_name }}-check-config'

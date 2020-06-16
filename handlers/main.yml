@@ -39,9 +39,6 @@
   delay: 1
   until: health_check_alertmanager.status == 200
 
-- name: Include Grafana handlers
-  include_tasks: ./grafana.yml
-
 - name: restart grafana
   listen: restart_grafana
   notify: health_check_grafana
