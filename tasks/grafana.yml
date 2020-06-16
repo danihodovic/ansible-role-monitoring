@@ -25,10 +25,13 @@
 - name: Start container
   notify: health_check_grafana
   docker_container:
+    comparisons:
+      '*': strict
     image: '{{ grafana_image }}'
     name: '{{ grafana_container_name }}'
     user: root
     restart_policy: unless-stopped
+    # yamllint disable rule:line-length
     networks: '{{ monitoring_default_docker_networks }} + {{ grafana_docker_networks }}'
     env: '{{ grafana_env }}'
     ports:

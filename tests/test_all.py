@@ -1,8 +1,10 @@
 # pylint: disable=redefined-outer-name,invalid-name
 import time
-import testinfra
+
 import pytest
 import requests
+import testinfra
+
 
 @pytest.fixture
 def docker_host(host):
@@ -20,7 +22,7 @@ def test_containers_running(container, host):
 
 
 def test_containers_can_ping_prometheus(docker_host):
-    cmd = 'nc -vz prometheus 9090'
+    cmd = "nc -vz prometheus 9090"
     docker_host("grafana").run_test(cmd)
     docker_host("alertmanager").run_test(cmd)
 
@@ -33,3 +35,7 @@ def test_grafana_datasource_prometheus(_host):
         "http://localhost:9099/api/datasources/proxy/1/api/v1/query",
         params={"query": "1+1", "time": int(time.time())},
     )
+
+
+def test_grafana_stores_db_on_host_disk(host):
+    assert host.file("/tmp/grafana/data/grafana.sqlite3").is_file

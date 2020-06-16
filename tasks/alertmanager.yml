@@ -18,9 +18,12 @@
 - name: Start container
   notify: health_check_alertmanager
   docker_container:
+    comparisons:
+      '*': strict
     image: '{{ alertmanager_image }}'
     name: '{{ alertmanager_container_name }}'
     restart_policy: unless-stopped
+    # yamllint disable-line rule:line-length
     networks: '{{ monitoring_default_docker_networks }} + {{ alertmanager_docker_networks }}'
     user: root
     ports:
