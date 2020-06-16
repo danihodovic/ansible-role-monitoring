@@ -4,7 +4,7 @@ dependency:
 driver:
   name: delegated
   options:
-    managed: False
+    managed: false
     ansible_connection_options:
       ansible_connection: local
 platforms:
@@ -13,7 +13,7 @@ provisioner:
   name: ansible
   config_options:
     defaults:
-      interpreter_python: ../../.venv/bin/python
+      interpreter_python: "${MOLECULE_PYTHON:-../../.venv/bin/python}"
       stdout_callback: yaml
   inventory:
     group_vars:

@@ -19,4 +19,4 @@ install:
 script:
   - black --check .
   - isort --check-only
-  - molecule test
+  - MOLECULE_PYTHON=$(which python) molecule test
