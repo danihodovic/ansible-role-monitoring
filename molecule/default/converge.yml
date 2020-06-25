@@ -21,3 +21,8 @@
       include_role:
         name: ansible-role-prometheus
         tasks_from: grafana.yml
+
+    - name: Deploy Blackbox
+      include_role:
+        name: ansible-role-prometheus
+        tasks_from: blackbox_exporter.yml

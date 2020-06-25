@@ -21,6 +21,7 @@ provisioner:
         prometheus_dir: /tmp/prometheus
         alertmanager_dir: /tmp/alertmanager
         grafana_dir: /tmp/grafana
+        blackbox_dir: /tmp/blackbox
 
 verifier:
   name: testinfra

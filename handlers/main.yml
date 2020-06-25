@@ -57,3 +57,22 @@
   retries: 10
   delay: 1
   until: health_check_grafana.status == 200
+
+- name: Restart blackbox exporter
+  listen: restart_blackbox
+  notify: health_check_blackbox
+  docker_container:
+    name: '{{ blackbox_container_name }}'
+    state: started
+    restart: true
+
+- name: Health check blackbox
+  listen: health_check_blackbox
+  uri:
+    url: 'http://localhost:{{ blackbox_port }}'
+    status_code: 200
+    timeout: 5
+  register: health_check_blackbox
+  retries: 10
+  delay: 1
+  until: health_check_blackbox.status == 200

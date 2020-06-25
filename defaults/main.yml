@@ -41,3 +41,10 @@ grafana_data_sources: |
       type: prometheus
       access: proxy
       url: http://{{ prometheus_container_name }}:9090
+
+blackbox_dir: /opt/blackbox
+blackbox_docker_networks: []
+blackbox_image: prom/blackbox-exporter
+blackbox_container_name: blackbox
+blackbox_port: 9115
+blackbox_config: '{{ lookup("file", "blackbox_default_config.yml") }}'
