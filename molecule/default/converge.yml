@@ -22,6 +22,11 @@
         name: ansible-role-prometheus
         tasks_from: grafana.yml
 
+    - name: Deploy loki
+      include_role:
+        name: ansible-role-prometheus
+        tasks_from: loki.yml
+
     - name: Deploy Blackbox
       include_role:
         name: ansible-role-prometheus

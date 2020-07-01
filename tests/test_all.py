@@ -17,7 +17,7 @@ def docker_host(host):
 
 
 @pytest.mark.parametrize(
-    "container", ["prometheus", "alertmanager", "grafana", "blackbox"]
+    "container", ["prometheus", "alertmanager", "grafana", "blackbox", "loki"]
 )
 def test_containers_running(container, host):
     assert host.docker(container).is_running
@@ -50,9 +50,14 @@ def test_grafana_stores_db_on_host_disk(host):
         ("alertmanager", "http://localhost:9093/-/ready"),
         ("grafana", "http://localhost:9099/api/health"),
         ("blackbox", "http://localhost:9115"),
+        ("loki", "http://localhost:9098/ready"),
     ],
 )
 def test_health_check(component):
     message, url = component
     res = requests.get(url)
     assert res.status_code == 200, message
+
+
+# TODO: Test grafana datasources
+# https://grafana.com/docs/grafana/latest/http_api/data_source/

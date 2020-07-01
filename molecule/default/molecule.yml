@@ -4,7 +4,7 @@ dependency:
 driver:
   name: delegated
   options:
-    managed: false
+    managed: true
     ansible_connection_options:
       ansible_connection: local
 platforms:
@@ -18,10 +18,16 @@ provisioner:
   inventory:
     group_vars:
       all:
+        ansible_connection: local
+        ansible_become: true
         prometheus_dir: /tmp/prometheus
         alertmanager_dir: /tmp/alertmanager
         grafana_dir: /tmp/grafana
         blackbox_dir: /tmp/blackbox
+        loki_dir: /tmp/loki
+  playbooks:
+    converge: converge.yml
+    destroy: destroy.yml
 
 verifier:
   name: testinfra
