@@ -42,6 +42,19 @@ grafana_data_sources: |
       access: proxy
       url: http://{{ prometheus_container_name }}:9090
 
+    - name: Loki
+      type: loki
+      access: proxy
+      url: http://{{ loki_container_name }}:{{ loki_port }}
+
+loki_dir: /opt/loki
+loki_address: '127.0.0.1'
+loki_port: '9098'
+loki_image: grafana/loki:latest
+loki_container_name: loki
+loki_config: '{{ lookup("template", "loki_config.yml") }}'
+loki_docker_networks: '{{ monitoring_default_docker_networks }} + {{ grafana_docker_networks }}'
+
 blackbox_dir: /opt/blackbox
 blackbox_docker_networks: []
 blackbox_image: prom/blackbox-exporter

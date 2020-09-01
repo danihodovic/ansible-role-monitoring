@@ -1,0 +1,32 @@
+---
+- name: Create loki dir
+  file:
+    path: '{{ loki_dir }}'
+    state: directory
+
+- name: Copy the loki config file
+  notify: restart_loki
+  copy:
+    content: '{{ loki_config }}'
+    dest: '{{ loki_dir }}/config.yml'
+
+- name: Pull image
+  docker_image:
+    source: pull
+    name: '{{ loki_image }}'
+
+- name: Start container
+  notify: health_check_loki
+  docker_container:
+    comparisons:
+      '*': strict
+    image: '{{ loki_image }}'
+    name: '{{ loki_container_name }}'
+    user: root
+    command: '-config.file={{ loki_dir }}/config.yml'
+    restart_policy: unless-stopped
+    networks: '{{ loki_docker_networks }}'
+    ports:
+      - '{{ loki_address }}:{{ loki_port }}:{{ loki_port }}'
+    volumes:
+      - '{{ loki_dir }}:{{ loki_dir }}'

@@ -1,12 +1,14 @@
 ---
 - name: Destroy
   hosts: localhost
+  vars:
+    ansible_connection: local
   tasks:
     - name: Remove the container
       docker_container:
         name: '{{ item }}'
         state: absent
-      loop: [prometheus, alertmanager, grafana]
+      loop: [prometheus, alertmanager, grafana, blackbox, loki]
 
     - name: Delete the dirs
       become: true
@@ -17,3 +19,6 @@
         - '{{ prometheus_dir }}'
         - '{{ alertmanager_dir }}'
         - '{{ grafana_dir }}'
+        - '{{ alertmanager_dir }}'
+        - '{{ blackbox_dir }}'
+        - '{{ loki_dir }}'
