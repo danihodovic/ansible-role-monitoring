@@ -26,6 +26,7 @@
     # yamllint disable-line rule:line-length
     networks: '{{ monitoring_default_docker_networks }} + {{ alertmanager_docker_networks }}'
     user: root
+    memory: '{{ alertmanager_memory }}'
     ports:
       - '127.0.0.1:9093:9093'
     command:
