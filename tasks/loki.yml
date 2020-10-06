@@ -26,6 +26,7 @@
     command: '-config.file={{ loki_dir }}/config.yml'
     restart_policy: unless-stopped
     networks: '{{ loki_docker_networks }}'
+    memory: '{{ loki_memory }}'
     ports:
       - '{{ loki_address }}:{{ loki_port }}:{{ loki_port }}'
     volumes:

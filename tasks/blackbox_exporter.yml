@@ -43,6 +43,7 @@
     detach: true
     cleanup: false
     restart_policy: unless-stopped
+    memory: '{{ blackbox_memory }}'
     ports:
       - '127.0.0.1:{{ blackbox_port }}:{{ blackbox_port }}'
     command: --config.file=/etc/blackbox_exporter/config.yml

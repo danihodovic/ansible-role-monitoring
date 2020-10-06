@@ -12,6 +12,7 @@ prometheus_config: '{{ lookup("template", "prometheus_default_config.yml") }}'
 prometheus_recording_rules: ''
 prometheus_alerting_rules: ''
 prometheus_docker_networks: []
+prometheus_memory: '{{ ansible_memory_mb.real.total * 0.2 }}m'
 
 alertmanager_dir: /opt/alertmanager
 alertmanager_image: prom/alertmanager:latest
@@ -19,6 +20,7 @@ alertmanager_container_name: alertmanager
 alertmanager_url: http://alertmanager
 alertmanager_config: '{{ lookup("template", "alertmanager_default_config.yml") }}'
 alertmanager_docker_networks: []
+alertmanager_memory: '{{ ansible_memory_mb.real.total * 0.1 }}m'
 
 grafana_dir: /opt/grafana
 grafana_data_dir: '{{ grafana_dir }}/data'
@@ -26,6 +28,7 @@ grafana_provisioning_dir: '{{ grafana_dir }}/provisioning'
 grafana_image: grafana/grafana:latest
 grafana_container_name: grafana
 grafana_docker_networks: []
+grafana_memory: '{{ ansible_memory_mb.real.total * 0.2 }}m'
 grafana_env:
   GF_SERVER_HTTP_PORT: '80'
   GF_SERVER_HTTP_ENABLE_GZIP: 'true'
@@ -54,6 +57,7 @@ loki_image: grafana/loki:latest
 loki_container_name: loki
 loki_config: '{{ lookup("template", "loki_config.yml") }}'
 loki_docker_networks: '{{ monitoring_default_docker_networks }} + {{ grafana_docker_networks }}'
+loki_memory: '{{ ansible_memory_mb.real.total * 0.1 }}m'
 
 blackbox_dir: /opt/blackbox
 blackbox_docker_networks: []
@@ -61,3 +65,4 @@ blackbox_image: prom/blackbox-exporter
 blackbox_container_name: blackbox
 blackbox_port: 9115
 blackbox_config: '{{ lookup("file", "blackbox_default_config.yml") }}'
+blackbox_memory: '{{ ansible_memory_mb.real.total * 0.05 }}m'

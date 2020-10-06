@@ -59,6 +59,7 @@
     cleanup: false
     restart_policy: unless-stopped
     entrypoint: '/bin/prometheus'
+    memory: '{{ prometheus_memory }}'
     ports:
       - '127.0.0.1:9090:9090'
     command:
