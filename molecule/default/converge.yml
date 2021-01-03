@@ -29,6 +29,11 @@
         name: ansible-role-prometheus
         tasks_from: loki.yml
 
+    - name: Deploy cadvisor
+      include_role:
+        name: ansible-role-prometheus
+        tasks_from: cadvisor.yml
+
     - name: Deploy Blackbox
       include_role:
         name: ansible-role-prometheus

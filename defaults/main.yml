@@ -59,6 +59,8 @@ loki_config: '{{ lookup("template", "loki_config.yml") }}'
 loki_docker_networks: '{{ monitoring_default_docker_networks }} + {{ grafana_docker_networks }}'
 loki_memory: '{{ ansible_memory_mb.real.total * 0.1 }}m'
 
+cadvisor_docker_networks: '{{ monitoring_default_docker_networks }}'
+
 blackbox_dir: /opt/blackbox
 blackbox_docker_networks: []
 blackbox_image: prom/blackbox-exporter
