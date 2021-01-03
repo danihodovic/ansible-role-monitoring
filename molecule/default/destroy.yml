@@ -1,24 +1,52 @@
 ---
 - name: Destroy
   hosts: localhost
-  vars:
-    ansible_connection: local
+  connection: local
+  gather_facts: false
+  no_log: "{{ molecule_no_log }}"
   tasks:
-    - name: Remove the container
-      docker_container:
-        name: '{{ item }}'
-        state: absent
-      loop: [prometheus, alertmanager, grafana, blackbox, loki]
+    - block:
+        - name: Populate instance config
+          set_fact:
+            instance_conf: "{{ lookup('file', molecule_instance_config) | from_yaml }}"
+            skip_instances: false
+      rescue:
+        - name: Populate instance config when file missing
+          set_fact:
+            instance_conf: {}
+            skip_instances: true
 
-    - name: Delete the dirs
-      become: true
-      file:
+    - name: Destroy molecule instance(s)
+      amazon.aws.ec2:
         state: absent
-        path: '{{ prometheus_dir }}'
-      loop:
-        - '{{ prometheus_dir }}'
-        - '{{ alertmanager_dir }}'
-        - '{{ grafana_dir }}'
-        - '{{ alertmanager_dir }}'
-        - '{{ blackbox_dir }}'
-        - '{{ loki_dir }}'
+        instance_ids: "{{ item.instance_ids }}"
+      register: server
+      with_items: "{{ instance_conf }}"
+      when: not skip_instances
+      async: 7200
+      poll: 0
+
+    - name: Destroy temporary ssh keys
+      ec2_key:
+        name: "{{ instance_conf[0].key_pair_name }}"
+      when: not skip_instances
+
+    - name: Wait for instance(s) deletion to complete
+      async_status:
+        jid: "{{ item.ansible_job_id }}"
+      register: ec2_jobs
+      until: ec2_jobs.finished
+      retries: 300
+      with_items: "{{ server.results }}"
+
+    # Mandatory configuration for Molecule to function.
+
+    - name: Populate instance config
+      set_fact:
+        instance_conf: {}
+
+    - name: Dump instance config
+      copy:
+        content: "{{ instance_conf | to_json | from_json | to_yaml }}"
+        dest: "{{ molecule_instance_config }}"
+      when: server.changed | bool

@@ -2,33 +2,41 @@
 dependency:
   name: galaxy
 driver:
-  name: delegated
-  options:
-    managed: true
-    ansible_connection_options:
-      ansible_connection: local
+  name: ec2
 platforms:
-  - name: localhost
+  - name: monitoring
+    vpc_subnet_id: subnet-1efffb7b
+    image: ami-0c48db26521ca9f07
+    instance_type: m5.xlarge
+    groups: [consul, consul_server]
 provisioner:
   name: ansible
   config_options:
     defaults:
-      interpreter_python: "${MOLECULE_PYTHON:-../../.venv/bin/python}"
       stdout_callback: yaml
+      host_key_checking: false
+      pipelining: true
   inventory:
     group_vars:
       all:
-        ansible_connection: local
-        ansible_become: true
-        prometheus_dir: /tmp/prometheus
-        alertmanager_dir: /tmp/alertmanager
-        grafana_dir: /tmp/grafana
-        blackbox_dir: /tmp/blackbox
-        loki_dir: /tmp/loki
-  playbooks:
-    converge: converge.yml
-    destroy: destroy.yml
-
+        consul_network_range: '172.31.0.0/20'
+        molecule_no_log: false
 verifier:
   name: testinfra
   directory: ../../tests
+  options:
+    reruns: '3'
+    reruns-delay: '2'
+scenario:
+  test_sequence:
+    - dependency
+    - lint
+    - cleanup
+    - destroy
+    - syntax
+    - create
+    - converge
+    - side_effect
+    - verify
+    - cleanup
+    - destroy
