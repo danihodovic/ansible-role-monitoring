@@ -23,6 +23,9 @@ provisioner:
 verifier:
   name: testinfra
   directory: ../../tests
+  options:
+    reruns: '3'
+    reruns-delay: '2'
 scenario:
   test_sequence:
     - dependency
