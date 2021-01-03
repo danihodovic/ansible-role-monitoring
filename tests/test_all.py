@@ -7,7 +7,7 @@ import requests
 
 @pytest.mark.parametrize(
     "container",
-    ["prometheus", "alertmanager", "grafana", "blackbox", "loki"],
+    ["prometheus", "alertmanager", "grafana", "blackbox", "loki", "cadvisor"],
 )
 def test_containers_running(container, host):
     with host.sudo():

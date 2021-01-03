@@ -1,0 +1,35 @@
+---
+- name: Pull cadvisor
+  docker_image:
+    source: pull
+    name: gcr.io/cadvisor/cadvisor:latest
+    force: true
+
+- name: Start container
+  docker_container:
+    comparisons:
+      '*': strict
+    image: gcr.io/cadvisor/cadvisor:latest
+    name: cadvisor
+    restart_policy: unless-stopped
+    privileged: true
+    command: -port=9338
+    memory: '{{ ansible_memory_mb.real.total * 0.1 }}m'
+    cpu_shares: '{{ (1024 * 0.1) | int }}'
+    network_mode: host
+    devices:
+      - /dev/kmsg
+    volumes:
+      - '/:/rootfs:ro'
+      - '/var/run:/var/run:ro'
+      - '/sys:/sys:ro'
+      - '/var/lib/docker/:/var/lib/docker:ro'
+      - '/dev/disk/:/dev/disk:ro'
+
+- name: Health check cadvisor
+  uri:
+    url: http://localhost:9338/healthz
+  register: health_check_cadvisor
+  retries: 10
+  delay: 1
+  until: health_check_cadvisor.status == 200
