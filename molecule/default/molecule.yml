@@ -8,7 +8,6 @@ platforms:
     vpc_subnet_id: subnet-1efffb7b
     image: ami-0c48db26521ca9f07
     instance_type: m5.xlarge
-    groups: [consul, consul_server]
 provisioner:
   name: ansible
   config_options:
