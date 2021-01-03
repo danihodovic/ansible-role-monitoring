@@ -3,18 +3,6 @@ import time
 
 import pytest
 import requests
-import testinfra
-
-
-@pytest.fixture
-def docker_host(host):
-    def fn(container_name):
-        with host.sudo():
-            container = host.docker(container_name)
-            assert container.is_running
-            return testinfra.get_host(f"docker://{container.id}")
-
-    return fn
 
 
 @pytest.mark.parametrize(
@@ -26,10 +14,10 @@ def test_containers_running(container, host):
         assert host.docker(container).is_running
 
 
-def test_containers_can_ping_prometheus(docker_host):
-    cmd = "nc -vz prometheus 9090"
-    docker_host("grafana").run_test(cmd)
-    docker_host("alertmanager").run_test(cmd)
+def test_containers_can_ping_prometheus(host):
+    with host.sudo():
+        for container in ["grafana", "alertmanager"]:
+            host.check_output(f"docker exec {container} nc -vz prometheus 9090")
 
 
 @pytest.mark.skip(reason="needs session auth")
