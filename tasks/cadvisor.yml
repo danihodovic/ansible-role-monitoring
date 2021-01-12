@@ -13,7 +13,10 @@
     name: cadvisor
     restart_policy: unless-stopped
     privileged: true
-    command: -port=9338
+    command: >-
+      -port=9338
+      -housekeeping_interval=15s
+      -docker_only=true
     memory: '{{ ansible_memory_mb.real.total * 0.1 }}m'
     cpu_shares: '{{ (1024 * 0.1) | int }}'
     network_mode: host
