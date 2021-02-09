@@ -33,39 +33,16 @@
 
 - name: Check config
   changed_when: false
-  docker_container: &prometheus_docker_container
-    comparisons:
-      '*': strict
-    image: '{{ prometheus_image }}'
-    name: '{{ prometheus_container_name }}-check-config'
-    user: root
-    entrypoint: '/bin/promtool'
-    command: 'check config /etc/prometheus/prometheus.yml'
-    detach: false
-    cleanup: true
-    # yamllint disable-line rule:line-length
-    networks: '{{ monitoring_default_docker_networks }} + {{ prometheus_docker_networks }}'
-    volumes:
-      - '{{ prometheus_dir }}:/etc/prometheus'
-      - '{{ prometheus_dir }}/data/:/prometheus/'
-    memory: '{{ ansible_memory_mb.real.total * 0.5 }}m'
+  # yamllint disable-line rule:line-length
+  docker_container: '{{ prometheus_container_defaults | combine(prometheus_container) | combine({
+      "name": prometheus_container_name + "-check-config",
+      "entrypoint": "/bin/promtool",
+      "command": "check config /etc/prometheus/prometheus.yml",
+      "detach": false,
+      "cleanup": true,
+    })}}'
 
 - name: Start container
   notify: health_check_prometheus
-  docker_container:
-    <<: *prometheus_docker_container
-    name: '{{ prometheus_container_name }}'
-    detach: true
-    cleanup: false
-    restart_policy: unless-stopped
-    entrypoint: '/bin/prometheus'
-    memory: '{{ prometheus_memory }}'
-    ports:
-      - '127.0.0.1:9090:9090'
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--web.external-url={{ alertmanager_url }}'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.enable-lifecycle'
-      - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention={{ prometheus_retention_period }}'
+  # yamllint disable-line rule:line-length
+  docker_container: '{{ prometheus_container_defaults | combine(prometheus_container) }}'
