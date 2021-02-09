@@ -13,6 +13,28 @@ prometheus_recording_rules: ''
 prometheus_alerting_rules: ''
 prometheus_docker_networks: []
 prometheus_memory: '{{ ansible_memory_mb.real.total * 0.2 }}m'
+prometheus_container: {}
+prometheus_container_defaults:
+  comparisons:
+    '*': strict
+  image: '{{ prometheus_image }}'
+  name: '{{ prometheus_container_name }}'
+  restart_policy: unless-stopped
+  user: root
+  command:
+    - '--config.file=/etc/prometheus/prometheus.yml'
+    - '--web.external-url={{ alertmanager_url }}'
+    - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+    - '--web.enable-lifecycle'
+    - '--storage.tsdb.path=/prometheus'
+    - '--storage.tsdb.retention={{ prometheus_retention_period }}'
+  memory: '{{ prometheus_memory }}'
+  networks: '{{ monitoring_default_docker_networks }} + {{ prometheus_docker_networks }}'
+  ports:
+    - '127.0.0.1:9090:9090'
+  volumes:
+    - '{{ prometheus_dir }}:/etc/prometheus'
+    - '{{ prometheus_dir }}/data/:/prometheus/'
 
 alertmanager_dir: /opt/alertmanager
 alertmanager_image: prom/alertmanager:latest
