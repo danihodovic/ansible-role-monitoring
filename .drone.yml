@@ -7,6 +7,8 @@ volumes:
   - name: cache
     host:
       path: /tmp/cache-ansible-role-drone
+  - name: molecule-config
+    temp: {}
 
 workspace:
   path: ${DRONE_REPO_NAME}
@@ -27,16 +29,21 @@ steps:
         path: /tmp/cache
 
   - name: install-dependencies
-    image: python:3.8
+    image: python:3.9.1
     commands:
       # If the virtualenv dir is not cached create it
       - '[ ! -d ".virtualenv" ] && python -m venv .virtualenv'
       - . .virtualenv/bin/activate
       - pip install -r requirements.txt
 
-  - name: test
-    image: python:3.8
+  - &common
+    name: molecule-create
+    image: python:3.9.1
+    volumes:
+      - name: molecule-config
+        path: /molecule
     environment:
+      MOLECULE_EPHEMERAL_DIRECTORY: /molecule
       AWS_ACCESS_KEY_ID:
         from_secret: AWS_ACCESS_KEY_ID
       AWS_SECRET_ACCESS_KEY:
@@ -44,28 +51,41 @@ steps:
       AWS_REGION: eu-west-1
       USER: root
       ANSIBLE_FORCE_COLOR: '1'
-    volumes:
-      - name: cache
-        path: '/usr/local/lib/python3.9/site-packages'
     commands:
       - . .virtualenv/bin/activate
-      - molecule test
+      - molecule syntax
+      - molecule destroy
+      - molecule create
+
+  - <<: *common
+    name: molecule-converge
+    commands:
+      - . .virtualenv/bin/activate
+      - molecule converge
+
+  - <<: *common
+    name: molecule-verify
+    commands:
+      - . .virtualenv/bin/activate
+      - molecule verify
+
+  - <<: *common
+    name: molecule-destroy
+    commands:
+      - . .virtualenv/bin/activate
+      - molecule destroy
+    when:
+      # Run regardless of prior success or failure
+      status:
+        - success
+        - failure
+
+  - <<: *common
+    name: lint-py
+    commands:
+      - . .virtualenv/bin/activate
       - black --check .
       - isort --check-only .
-
-  - name: rebuild-cache-with-filesystem
-    image: meltwater/drone-cache:dev
-    pull: true
-    settings:
-      backend: "filesystem"
-      rebuild: true
-      cache_key: '{{ .Repo.Name }}_{{ checksum "requirements.txt" }}'
-      archive_format: "gzip"
-      mount:
-        - '.virtualenv'
-    volumes:
-    - name: cache
-      path: /tmp/cache
 
   - name: fail-on-debug-instruction
     image: alpine
