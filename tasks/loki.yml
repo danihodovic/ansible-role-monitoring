@@ -5,7 +5,6 @@
     state: directory
 
 - name: Copy the loki config file
-  notify: restart_loki
   copy:
     content: '{{ loki_config }}'
     dest: '{{ loki_dir }}/config.yml'
@@ -15,19 +14,19 @@
     source: pull
     name: '{{ loki_image }}'
 
+- set_fact:
+    loki_container: '{{ loki_container_defaults | combine(loki_container) }}'
+
 - name: Start container
-  notify: health_check_loki
-  docker_container:
-    comparisons:
-      '*': strict
-    image: '{{ loki_image }}'
-    name: '{{ loki_container_name }}'
-    user: root
-    command: '-config.file={{ loki_dir }}/config.yml'
-    restart_policy: unless-stopped
-    networks: '{{ loki_docker_networks }}'
-    memory: '{{ loki_memory }}'
-    ports:
-      - '{{ loki_address }}:{{ loki_port }}:{{ loki_port }}'
-    volumes:
-      - '{{ loki_dir }}:{{ loki_dir }}'
+  docker_container: '{{ loki_container }}'
+
+- name: Wait for Loki to start
+  register: health_check_result
+  # yamllint disable rule:line-length
+  shell: >-
+    docker exec -it {{ loki_container.name }} sh -c
+    'apk add --no-cache httpie && http http://localhost:{{ loki_port }}/ready --check-status --timeout=3'
+  retries: 40
+  delay: 2
+  until: health_check_result.rc == 0
+  changed_when: false

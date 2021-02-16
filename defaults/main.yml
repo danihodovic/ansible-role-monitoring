@@ -43,6 +43,24 @@ alertmanager_url: http://alertmanager
 alertmanager_config: '{{ lookup("template", "alertmanager_default_config.yml") }}'
 alertmanager_docker_networks: []
 alertmanager_memory: '{{ ansible_memory_mb.real.total * 0.1 }}m'
+alertmanager_port: '9093'
+alertmanager_container: {}
+alertmanager_container_defaults:
+  comparisons:
+    '*': strict
+  image: '{{ alertmanager_image }}'
+  name: '{{ alertmanager_container_name }}'
+  restart_policy: unless-stopped
+  restart: true
+  network_mode: host
+  user: root
+  memory: '{{ alertmanager_memory }}'
+  command:
+    - '--config.file=/etc/alertmanager/alertmanager.yml'
+    - '--web.external-url={{ alertmanager_url }}'
+  volumes:
+    - '{{ alertmanager_dir }}:/etc/alertmanager'
+    - '{{ alertmanager_dir }}/data:/alertmanager'
 
 grafana_dir: /opt/grafana
 grafana_data_dir: '{{ grafana_dir }}/data'
@@ -92,8 +110,21 @@ loki_port: '9098'
 loki_image: grafana/loki:latest
 loki_container_name: loki
 loki_config: '{{ lookup("template", "loki_config.yml") }}'
-loki_docker_networks: '{{ monitoring_default_docker_networks }} + {{ grafana_docker_networks }}'
 loki_memory: '{{ ansible_memory_mb.real.total * 0.1 }}m'
+loki_container: {}
+loki_container_defaults:
+  comparisons:
+    '*': strict
+  image: '{{ loki_image }}'
+  name: '{{ loki_container_name }}'
+  user: root
+  command: '-config.file={{ loki_dir }}/config.yml'
+  restart: true
+  restart_policy: unless-stopped
+  network_mode: host
+  memory: '{{ loki_memory }}'
+  volumes:
+    - '{{ loki_dir }}:{{ loki_dir }}'
 
 cadvisor_docker_networks: '{{ monitoring_default_docker_networks }}'
 

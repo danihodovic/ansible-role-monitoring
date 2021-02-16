@@ -20,25 +20,6 @@
   delay: 1
   until: health_check_prometheus.status == 200
 
-- name: Restart alertmanager
-  listen: restart_alertmanager
-  notify: health_check_alertmanager
-  docker_container:
-    name: '{{ alertmanager_container_name }}'
-    state: started
-    restart: true
-
-- name: Health check alertmanager
-  listen: health_check_alertmanager
-  uri:
-    url: http://localhost:9093/-/ready
-    status_code: 200
-    timeout: 5
-  register: health_check_alertmanager
-  retries: 10
-  delay: 1
-  until: health_check_alertmanager.status == 200
-
 - name: Restart blackbox exporter
   listen: restart_blackbox
   notify: health_check_blackbox
@@ -57,23 +38,3 @@
   retries: 10
   delay: 1
   until: health_check_blackbox.status == 200
-
-- name: Restart loki
-  listen: restart_loki
-  notify: health_check_loki
-  docker_container:
-    image: '{{ loki_image }}'
-    name: '{{ loki_container_name }}'
-    state: started
-    restart: true
-
-- name: Health check loki
-  listen: health_check_loki
-  uri:
-    url: 'http://{{ loki_address }}:{{ loki_port }}/ready'
-    status_code: 200
-    timeout: 5
-  register: health_check_loki
-  retries: 40
-  delay: 2
-  until: health_check_loki.status == 200
