@@ -1,12 +1,10 @@
 ---
 - name: Create grafana dir
-  notify: restart_grafana
   file:
     path: '{{ grafana_dir }}'
     state: directory
 
 - name: Create data sources dir
-  notify: restart_grafana
   file:
     path: '{{ grafana_provisioning_dir }}/datasources'
     state: directory
@@ -23,20 +21,24 @@
     name: '{{ grafana_image }}'
 
 - name: Start container
-  notify: health_check_grafana
-  docker_container:
-    comparisons:
-      '*': strict
-    image: '{{ grafana_image }}'
-    name: '{{ grafana_container_name }}'
-    user: root
-    restart_policy: unless-stopped
-    # yamllint disable rule:line-length
-    networks: '{{ monitoring_default_docker_networks }} + {{ grafana_docker_networks }}'
-    env: '{{ grafana_env }}'
-    memory: '{{ grafana_memory }}'
-    ports:
-      - '127.0.0.1:9099:80'
-    volumes:
-      - '{{ grafana_data_dir }}:/var/lib/grafana'
-      - '{{ grafana_provisioning_dir }}:/etc/grafana/provisioning'
+  docker_container: '{{ grafana_container_defaults | combine(grafana_container) }}'
+
+- name: Health check grafana
+  uri:
+    url: http://localhost:9099/api/health
+    status_code: 200
+    timeout: 5
+  register: health_check_grafana
+  retries: 10
+  delay: 1
+  until: health_check_grafana.status == 200
+
+- name: Wait for Grafana to start
+  register: health_check_result
+  # yamllint disable rule:line-length
+  shell: >-
+    docker exec -it {{ drone_worker_container.name }} sh -c
+    'apk add --no-cache httpie && http http://localhost:{{ grafana_container.env.GF_SERVER_HTTP_PORT }}/api/health --check-status --timeout=3'
+  retries: 10
+  delay: 1
+  until: health_check_result.rc == 0

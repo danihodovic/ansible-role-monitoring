@@ -37,6 +37,7 @@
   docker_container: '{{ prometheus_container_defaults | combine(prometheus_container) | combine({
       "name": prometheus_container_name + "-check-config",
       "entrypoint": "/bin/promtool",
+      "restart_policy": "no",
       "command": "check config /etc/prometheus/prometheus.yml",
       "detach": false,
       "cleanup": true,

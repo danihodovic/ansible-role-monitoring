@@ -39,25 +39,6 @@
   delay: 1
   until: health_check_alertmanager.status == 200
 
-- name: restart grafana
-  listen: restart_grafana
-  notify: health_check_grafana
-  docker_container:
-    name: '{{ grafana_container_name }}'
-    state: started
-    restart: true
-
-- name: health check grafana
-  listen: health_check_grafana
-  uri:
-    url: http://localhost:9099/api/health
-    status_code: 200
-    timeout: 5
-  register: health_check_grafana
-  retries: 10
-  delay: 1
-  until: health_check_grafana.status == 200
-
 - name: Restart blackbox exporter
   listen: restart_blackbox
   notify: health_check_blackbox
