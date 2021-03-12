@@ -1,9 +1,5 @@
 ---
 # yamllint disable rule:line-length
-monitoring_docker_network_name: monitoring
-monitoring_default_docker_networks:
-  - name: '{{ monitoring_docker_network_name }}'
-
 prometheus_dir: /opt/prometheus
 prometheus_image: prom/prometheus:latest
 prometheus_container_name: prometheus
@@ -30,7 +26,7 @@ prometheus_container_defaults:
     - '--storage.tsdb.path=/prometheus'
     - '--storage.tsdb.retention={{ prometheus_retention_period }}'
   memory: '{{ prometheus_memory }}'
-  networks: '{{ monitoring_default_docker_networks }} + {{ prometheus_docker_networks }}'
+  network_mode: host
   ports:
     - '127.0.0.1:9090:9090'
   volumes:
@@ -126,8 +122,6 @@ loki_container_defaults:
   memory: '{{ loki_memory }}'
   volumes:
     - '{{ loki_dir }}:{{ loki_dir }}'
-
-cadvisor_docker_networks: '{{ monitoring_default_docker_networks }}'
 
 blackbox_dir: /opt/blackbox
 blackbox_docker_networks: []
