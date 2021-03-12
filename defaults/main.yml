@@ -1,9 +1,5 @@
 ---
 # yamllint disable rule:line-length
-monitoring_docker_network_name: monitoring
-monitoring_default_docker_networks:
-  - name: '{{ monitoring_docker_network_name }}'
-
 prometheus_dir: /opt/prometheus
 prometheus_image: prom/prometheus:latest
 prometheus_container_name: prometheus
@@ -20,6 +16,7 @@ prometheus_container_defaults:
   image: '{{ prometheus_image }}'
   name: '{{ prometheus_container_name }}'
   restart_policy: unless-stopped
+  restart: true
   user: root
   command:
     - '--config.file=/etc/prometheus/prometheus.yml'
@@ -29,9 +26,7 @@ prometheus_container_defaults:
     - '--storage.tsdb.path=/prometheus'
     - '--storage.tsdb.retention={{ prometheus_retention_period }}'
   memory: '{{ prometheus_memory }}'
-  networks: '{{ monitoring_default_docker_networks }} + {{ prometheus_docker_networks }}'
-  ports:
-    - '127.0.0.1:9090:9090'
+  network_mode: host
   volumes:
     - '{{ prometheus_dir }}:/etc/prometheus'
     - '{{ prometheus_dir }}/data/:/prometheus/'
@@ -43,27 +38,37 @@ alertmanager_url: http://alertmanager
 alertmanager_config: '{{ lookup("template", "alertmanager_default_config.yml") }}'
 alertmanager_docker_networks: []
 alertmanager_memory: '{{ ansible_memory_mb.real.total * 0.1 }}m'
+alertmanager_port: '9093'
+alertmanager_container: {}
+alertmanager_container_defaults:
+  comparisons:
+    '*': strict
+  image: '{{ alertmanager_image }}'
+  name: '{{ alertmanager_container_name }}'
+  restart_policy: unless-stopped
+  restart: true
+  network_mode: host
+  user: root
+  memory: '{{ alertmanager_memory }}'
+  command:
+    - '--config.file=/etc/alertmanager/alertmanager.yml'
+    - '--web.external-url={{ alertmanager_url }}'
+  volumes:
+    - '{{ alertmanager_dir }}:/etc/alertmanager'
+    - '{{ alertmanager_dir }}/data:/alertmanager'
 
 grafana_dir: /opt/grafana
 grafana_data_dir: '{{ grafana_dir }}/data'
 grafana_provisioning_dir: '{{ grafana_dir }}/provisioning'
 grafana_image: grafana/grafana:latest
 grafana_container_name: grafana
-grafana_docker_networks: []
 grafana_memory: '{{ ansible_memory_mb.real.total * 0.2 }}m'
-grafana_env:
-  GF_SERVER_HTTP_PORT: '80'
-  GF_SERVER_HTTP_ENABLE_GZIP: 'true'
-  GF_DATABASE_TYPE: 'sqlite3'
-  GF_DATABASE_PATH: '/var/lib/grafana/grafana.sqlite3'
-  GF_SESSION_COOKIE_SECURE: 'true'
-  GF_SESSION_SESSION_LIFE_TIME: '2592000'  # 1 month
-grafana_env_overrides: {}
 grafana_data_sources: |
   apiVersion: 1
   datasources:
     - name: Prometheus
       type: prometheus
+      isDefault: true
       access: proxy
       url: http://{{ prometheus_container_name }}:9090
 
@@ -71,6 +76,28 @@ grafana_data_sources: |
       type: loki
       access: proxy
       url: http://{{ loki_container_name }}:{{ loki_port }}
+grafana_container: {}
+grafana_container_defaults:
+  comparisons:
+    '*': strict
+  image: '{{ grafana_image }}'
+  name: '{{ grafana_container_name }}'
+  state: started
+  restart: true
+  restart_policy: unless-stopped
+  user: root
+  memory: '{{ grafana_memory }}'
+  network_mode: host
+  env:
+    GF_SERVER_HTTP_PORT: '9099'
+    GF_SERVER_HTTP_ENABLE_GZIP: 'true'
+    GF_DATABASE_TYPE: 'sqlite3'
+    GF_DATABASE_PATH: '/var/lib/grafana/grafana.sqlite3'
+    GF_SESSION_COOKIE_SECURE: 'true'
+    GF_SESSION_SESSION_LIFE_TIME: '2592000'  # 1 month
+  volumes:
+    - '{{ grafana_data_dir }}:/var/lib/grafana'
+    - '{{ grafana_provisioning_dir }}:/etc/grafana/provisioning'
 
 loki_dir: /opt/loki
 loki_address: '127.0.0.1'
@@ -78,10 +105,21 @@ loki_port: '9098'
 loki_image: grafana/loki:latest
 loki_container_name: loki
 loki_config: '{{ lookup("template", "loki_config.yml") }}'
-loki_docker_networks: '{{ monitoring_default_docker_networks }} + {{ grafana_docker_networks }}'
 loki_memory: '{{ ansible_memory_mb.real.total * 0.1 }}m'
-
-cadvisor_docker_networks: '{{ monitoring_default_docker_networks }}'
+loki_container: {}
+loki_container_defaults:
+  comparisons:
+    '*': strict
+  image: '{{ loki_image }}'
+  name: '{{ loki_container_name }}'
+  user: root
+  command: '-config.file={{ loki_dir }}/config.yml'
+  restart: true
+  restart_policy: unless-stopped
+  network_mode: host
+  memory: '{{ loki_memory }}'
+  volumes:
+    - '{{ loki_dir }}:{{ loki_dir }}'
 
 blackbox_dir: /opt/blackbox
 blackbox_docker_networks: []
@@ -90,3 +128,16 @@ blackbox_container_name: blackbox
 blackbox_port: 9115
 blackbox_config: '{{ lookup("file", "blackbox_default_config.yml") }}'
 blackbox_memory: '{{ ansible_memory_mb.real.total * 0.05 }}m'
+blackbox_container: {}
+blackbox_container_defaults:
+  comparisons:
+    '*': strict
+  image: '{{ blackbox_image }}'
+  name: '{{ blackbox_container_name }}'
+  user: root
+  command: [--config.file=/etc/blackbox_exporter/config.yml]
+  # yamllint disable-line rule:line-length
+  network_mode: host
+  volumes:
+    - '{{ blackbox_dir }}:/etc/blackbox_exporter'
+  memory: '{{ ansible_memory_mb.real.total * 0.2 }}m'

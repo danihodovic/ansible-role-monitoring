@@ -5,7 +5,6 @@
     state: directory
 
 - name: Copy config file
-  notify: restart_alertmanager
   copy:
     content: '{{ alertmanager_config }}'
     dest: '{{ alertmanager_dir }}/alertmanager.yml'
@@ -15,23 +14,9 @@
     source: pull
     name: '{{ alertmanager_image }}'
 
-- name: Start container
-  notify: health_check_alertmanager
-  docker_container:
-    comparisons:
-      '*': strict
-    image: '{{ alertmanager_image }}'
-    name: '{{ alertmanager_container_name }}'
-    restart_policy: unless-stopped
+- set_fact:
     # yamllint disable-line rule:line-length
-    networks: '{{ monitoring_default_docker_networks }} + {{ alertmanager_docker_networks }}'
-    user: root
-    memory: '{{ alertmanager_memory }}'
-    ports:
-      - '127.0.0.1:9093:9093'
-    command:
-      - '--config.file=/etc/alertmanager/alertmanager.yml'
-      - '--web.external-url={{ alertmanager_url }}'
-    volumes:
-      - '{{ alertmanager_dir }}:/etc/alertmanager'
-      - '{{ alertmanager_dir }}/data:/alertmanager'
+    alertmanager_container: '{{ alertmanager_container_defaults | combine(alertmanager_container)}}'
+
+- name: Start container
+  docker_container: '{{ alertmanager_container }}'

@@ -1,12 +1,10 @@
 ---
 - name: Create grafana dir
-  notify: restart_grafana
   file:
     path: '{{ grafana_dir }}'
     state: directory
 
 - name: Create data sources dir
-  notify: restart_grafana
   file:
     path: '{{ grafana_provisioning_dir }}/datasources'
     state: directory
@@ -17,26 +15,15 @@
     content: '{{ grafana_data_sources }}'
     dest: '{{ grafana_provisioning_dir }}/datasources/datasources.yml'
 
+- set_fact:
+    # yamllint disable-line rule:line-length
+    grafana_container: '{{ grafana_container_defaults | combine(grafana_container) }}'
+
 - name: Pull image
   docker_image:
     source: pull
-    name: '{{ grafana_image }}'
+    name: '{{ grafana_container.image }}'
 
 - name: Start container
-  notify: health_check_grafana
-  docker_container:
-    comparisons:
-      '*': strict
-    image: '{{ grafana_image }}'
-    name: '{{ grafana_container_name }}'
-    user: root
-    restart_policy: unless-stopped
-    # yamllint disable rule:line-length
-    networks: '{{ monitoring_default_docker_networks }} + {{ grafana_docker_networks }}'
-    env: '{{ grafana_env }}'
-    memory: '{{ grafana_memory }}'
-    ports:
-      - '127.0.0.1:9099:80'
-    volumes:
-      - '{{ grafana_data_dir }}:/var/lib/grafana'
-      - '{{ grafana_provisioning_dir }}:/etc/grafana/provisioning'
+  # yamllint disable-line rule:line-length
+  docker_container: '{{ grafana_container_defaults | combine(grafana_container) }}'

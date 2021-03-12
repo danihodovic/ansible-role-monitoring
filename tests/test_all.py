@@ -17,7 +17,7 @@ def test_containers_running(container, host):
 def test_containers_can_ping_prometheus(host):
     with host.sudo():
         for container in ["grafana", "alertmanager"]:
-            host.check_output(f"docker exec {container} nc -vz prometheus 9090")
+            host.check_output(f"docker exec {container} nc -vz localhost 9090")
 
 
 @pytest.mark.skip(reason="needs session auth")

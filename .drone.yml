@@ -12,7 +12,7 @@ workspace:
   path: ${DRONE_REPO_NAME}
 
 steps:
-  - name: restore-cache-with-filesystem
+  - name: restore-cache
     image: meltwater/drone-cache:dev
     pull: true
     settings:
@@ -26,7 +26,8 @@ steps:
       - name: cache
         path: /tmp/cache
 
-  - name: install-dependencies
+  - name: install-deps
+    depends_on: [restore-cache]
     image: python:3.8
     commands:
       # If the virtualenv dir is not cached create it
@@ -35,6 +36,7 @@ steps:
       - pip install -r requirements.txt
 
   - name: test
+    depends_on: [install-deps]
     image: python:3.8
     environment:
       AWS_ACCESS_KEY_ID:
@@ -53,7 +55,8 @@ steps:
       - black --check .
       - isort --check-only .
 
-  - name: rebuild-cache-with-filesystem
+  - name: rebuild-cache
+    depends_on: [install-deps]
     image: meltwater/drone-cache:dev
     pull: true
     settings:

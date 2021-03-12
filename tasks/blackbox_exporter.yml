@@ -1,12 +1,11 @@
 ---
+# yamllint disable rule:line-length
 - name: Create blackbox dir
-  notify: restart_blackbox
   file:
     path: '{{ blackbox_dir }}'
     state: directory
 
 - name: Copy config file
-  notify: restart_blackbox
   copy:
     content: '{{ blackbox_config }}'
     dest: '{{ blackbox_dir }}/config.yml'
@@ -16,34 +15,21 @@
     source: pull
     name: '{{ blackbox_image }}'
 
+- set_fact:
+    blackbox_container: '{{ blackbox_container_defaults | combine(blackbox_container )}}'
+
+- set_fact:
+    blackbox_container_check: '{{ blackbox_container | combine({
+        "name": blackbox_container.name + "-check-config",
+        "command": "--config.file=/etc/blackbox_exporter/config.yml --config.check",
+        "restart_policy": "no",
+        "detach": false,
+        "cleanup": true,
+      })}}'
+
 - name: Check config
   changed_when: false
-  docker_container: &blackbox_docker_container
-    comparisons:
-      '*': strict
-    image: '{{ blackbox_image }}'
-    name: '{{ blackbox_container_name }}-check-config'
-    user: root
-    command: >
-      --config.file=/etc/blackbox_exporter/config.yml
-      --config.check
-    detach: false
-    cleanup: true
-    # yamllint disable-line rule:line-length
-    networks: '{{ monitoring_default_docker_networks }} + {{ blackbox_docker_networks }}'
-    volumes:
-      - '{{ blackbox_dir }}:/etc/blackbox_exporter'
-    memory: '{{ ansible_memory_mb.real.total * 0.2 }}m'
+  docker_container: '{{ blackbox_container_check }}'
 
 - name: Start container
-  notify: health_check_blackbox
-  docker_container:
-    <<: *blackbox_docker_container
-    name: '{{ blackbox_container_name }}'
-    detach: true
-    cleanup: false
-    restart_policy: unless-stopped
-    memory: '{{ blackbox_memory }}'
-    ports:
-      - '127.0.0.1:{{ blackbox_port }}:{{ blackbox_port }}'
-    command: --config.file=/etc/blackbox_exporter/config.yml
+  docker_container: '{{ blackbox_container }}'
