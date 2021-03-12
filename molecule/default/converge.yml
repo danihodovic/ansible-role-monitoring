@@ -4,11 +4,6 @@
   vars:
     ansible_become: true
   tasks:
-    - name: Create network
-      include_role:
-        name: ansible-role-prometheus
-        tasks_from: docker_network.yml
-
     - name: Deploy Prometheus
       include_role:
         name: ansible-role-prometheus

@@ -1,6 +1,5 @@
 ---
 - name: Create prometheus dirs
-  notify: restart_prometheus
   file:
     path: '{{ item }}'
     state: directory
@@ -9,13 +8,11 @@
     - '{{ prometheus_dir }}/data'
 
 - name: Template prometheus.yml
-  notify: restart_prometheus
   copy:
     content: '{{ prometheus_config }}'
     dest: '{{ prometheus_dir }}/prometheus.yml'
 
 - name: Copy rules
-  notify: restart_prometheus
   when: 'item.content|length > 0'
   copy:
     content: '{{ item.content }}'
@@ -45,6 +42,5 @@
     })}}'
 
 - name: Start container
-  notify: health_check_prometheus
   # yamllint disable-line rule:line-length
   docker_container: '{{ prometheus_container_defaults | combine(prometheus_container) }}'

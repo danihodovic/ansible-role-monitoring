@@ -1,4 +1,0 @@
----
-- name: Create a shared docker network
-  docker_network:
-    name: '{{ monitoring_docker_network_name }}'
