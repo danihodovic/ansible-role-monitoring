@@ -79,8 +79,8 @@
         instance_tags: "{{ item.instance_tags | combine({'instance': item.name})
           if item.instance_tags is defined
           else {'instance': item.name} }}"
-        assign_public_ip: true
         wait: true
+        assign_public_ip: true
       register: server
       loop: "{{ molecule_yml.platforms }}"
       async: 7200
@@ -92,7 +92,7 @@
       register: ec2_jobs
       until: ec2_jobs.finished
       retries: 300
-      loop: "{{ server.results }}"
+      with_items: "{{ server.results }}"
 
     # Mandatory configuration for Molecule to function.
     - name: Populate instance config dict
@@ -105,7 +105,7 @@
           'identity_file': "{{ key_pair_path }}",
           'key_pair_name': '{{ key_pair_name }}',
           'instance_ids': "{{ item.instance_ids }}", }
-      with_items: "{{ ec2_jobs.results }}"
+      loop: "{{ ec2_jobs.results }}"
       register: instance_config_dict
       when: server.changed | bool
 

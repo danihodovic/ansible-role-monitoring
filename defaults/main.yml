@@ -27,8 +27,6 @@ prometheus_container_defaults:
     - '--storage.tsdb.retention={{ prometheus_retention_period }}'
   memory: '{{ prometheus_memory }}'
   network_mode: host
-  ports:
-    - '127.0.0.1:9090:9090'
   volumes:
     - '{{ prometheus_dir }}:/etc/prometheus'
     - '{{ prometheus_dir }}/data/:/prometheus/'
